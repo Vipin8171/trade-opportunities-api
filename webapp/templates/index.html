@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trade Opportunities API — India Market Analyzer</title>
+    <style>
+        /* ─── Reset & Base ─────────────────────────────────────────────────── */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+        a { color: #60a5fa; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        /* ─── Navbar ───────────────────────────────────────────────────────── */
+        .navbar {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-bottom: 1px solid #334155;
+            padding: 14px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .navbar .brand {
+            font-size: 1.25rem; font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .navbar .user-info {
+            display: flex; align-items: center; gap: 12px; font-size: 0.9rem;
+        }
+        .navbar .user-badge {
+            background: #1e40af; padding: 4px 12px; border-radius: 20px;
+            font-size: 0.8rem; font-weight: 600;
+        }
+        .navbar .btn-logout {
+            background: #dc2626; color: white; border: none; padding: 6px 16px;
+            border-radius: 6px; cursor: pointer; font-size: 0.85rem;
+        }
+        .navbar .btn-logout:hover { background: #b91c1c; }
+        .nav-links { display: flex; gap: 8px; }
+        .nav-links a {
+            padding: 6px 14px; border-radius: 6px; font-size: 0.85rem;
+            color: #94a3b8; transition: all 0.2s;
+        }
+        .nav-links a:hover, .nav-links a.active {
+            background: #1e293b; color: #60a5fa; text-decoration: none;
+        }
+
+        /* ─── Layout ───────────────────────────────────────────────────────── */
+        .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+
+        /* ─── Cards ────────────────────────────────────────────────────────── */
+        .card {
+            background: #1e293b; border: 1px solid #334155;
+            border-radius: 12px; padding: 28px; margin-bottom: 24px;
+        }
+        .card h2 {
+            font-size: 1.3rem; margin-bottom: 16px; color: #f1f5f9;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .card h2 .icon { font-size: 1.5rem; }
+
+        /* ─── Sections / Pages ─────────────────────────────────────────────── */
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* ─── Login Page ───────────────────────────────────────────────────── */
+        .login-wrapper {
+            display: flex; justify-content: center; align-items: center;
+            min-height: calc(100vh - 60px);
+        }
+        .login-card {
+            background: #1e293b; border: 1px solid #334155;
+            border-radius: 16px; padding: 40px; width: 100%; max-width: 440px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        }
+        .login-card h1 {
+            font-size: 1.8rem; text-align: center; margin-bottom: 8px;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .login-card .subtitle {
+            text-align: center; color: #94a3b8; margin-bottom: 28px; font-size: 0.9rem;
+        }
+
+        /* ─── Forms ────────────────────────────────────────────────────────── */
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block; font-size: 0.85rem; font-weight: 600;
+            color: #94a3b8; margin-bottom: 6px;
+        }
+        input, select {
+            width: 100%; padding: 12px 14px; background: #0f172a;
+            border: 1px solid #475569; border-radius: 8px; color: #e2e8f0;
+            font-size: 0.95rem; transition: border-color 0.2s;
+        }
+        input:focus, select:focus {
+            outline: none; border-color: #60a5fa;
+            box-shadow: 0 0 0 3px rgba(96,165,250,0.15);
+        }
+        select { cursor: pointer; }
+        .btn {
+            width: 100%; padding: 12px; border: none; border-radius: 8px;
+            font-size: 1rem; font-weight: 600; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            color: white;
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(37,99,235,0.4); }
+        .btn-primary:disabled {
+            opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none;
+        }
+        .btn-secondary {
+            background: #334155; color: #e2e8f0;
+        }
+        .btn-secondary:hover { background: #475569; }
+
+        .demo-creds {
+            background: #0f172a; border: 1px solid #334155; border-radius: 8px;
+            padding: 14px; margin-bottom: 20px; font-size: 0.85rem;
+        }
+        .demo-creds .title { color: #60a5fa; font-weight: 600; margin-bottom: 8px; }
+        .demo-creds .cred {
+            display: flex; justify-content: space-between; padding: 4px 0;
+            color: #94a3b8; cursor: pointer; border-radius: 4px;
+            padding: 4px 8px; transition: background 0.15s;
+        }
+        .demo-creds .cred:hover { background: #1e293b; color: #e2e8f0; }
+        .demo-creds .cred span:first-child { font-weight: 600; color: #a78bfa; }
+
+        /* ─── Sector Grid ──────────────────────────────────────────────────── */
+        .sector-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px; margin-top: 16px;
+        }
+        .sector-chip {
+            background: #0f172a; border: 1px solid #334155; border-radius: 8px;
+            padding: 12px 14px; text-align: center; cursor: pointer;
+            font-size: 0.85rem; transition: all 0.2s; text-transform: capitalize;
+        }
+        .sector-chip:hover {
+            border-color: #60a5fa; background: rgba(96,165,250,0.08);
+            transform: translateY(-2px);
+        }
+        .sector-chip.selected {
+            border-color: #60a5fa; background: rgba(96,165,250,0.15);
+            color: #60a5fa; font-weight: 600;
+        }
+
+        /* ─── Analyze Section ──────────────────────────────────────────────── */
+        .analyze-bar {
+            display: flex; gap: 12px; align-items: end;
+        }
+        .analyze-bar .form-group { flex: 1; margin-bottom: 0; }
+        .analyze-bar .btn { width: auto; padding: 12px 28px; white-space: nowrap; }
+
+        /* ─── Progress / Status ────────────────────────────────────────────── */
+        .status-bar {
+            background: #0f172a; border: 1px solid #334155; border-radius: 8px;
+            padding: 16px 20px; margin: 16px 0; display: none;
+        }
+        .status-bar.show { display: block; }
+        .status-bar .step {
+            display: flex; align-items: center; gap: 10px; padding: 6px 0;
+            color: #94a3b8; font-size: 0.9rem;
+        }
+        .status-bar .step.active { color: #fbbf24; }
+        .status-bar .step.done { color: #34d399; }
+        .status-bar .step .icon { width: 22px; text-align: center; }
+        .spinner {
+            display: inline-block; width: 16px; height: 16px;
+            border: 2px solid #475569; border-top-color: #fbbf24;
+            border-radius: 50%; animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ─── Report Display ───────────────────────────────────────────────── */
+        .report-container {
+            background: #0f172a; border: 1px solid #334155; border-radius: 8px;
+            padding: 28px; margin-top: 16px; display: none;
+            line-height: 1.7; font-size: 0.95rem;
+        }
+        .report-container.show { display: block; }
+        .report-container h1 { font-size: 1.5rem; color: #60a5fa; margin: 20px 0 12px; border-bottom: 1px solid #334155; padding-bottom: 8px; }
+        .report-container h2 { font-size: 1.25rem; color: #a78bfa; margin: 18px 0 10px; }
+        .report-container h3 { font-size: 1.05rem; color: #f59e0b; margin: 14px 0 8px; }
+        .report-container ul, .report-container ol { padding-left: 24px; margin: 8px 0; }
+        .report-container li { margin: 4px 0; color: #cbd5e1; }
+        .report-container strong { color: #f1f5f9; }
+        .report-container table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+        .report-container th, .report-container td {
+            border: 1px solid #334155; padding: 8px 12px; text-align: left;
+        }
+        .report-container th { background: #1e293b; color: #60a5fa; }
+        .report-container hr { border: none; border-top: 1px solid #334155; margin: 16px 0; }
+        .report-container em { color: #94a3b8; }
+        .report-container p { margin: 8px 0; }
+
+        .report-meta {
+            display: flex; gap: 24px; margin-bottom: 16px; flex-wrap: wrap;
+        }
+        .report-meta .tag {
+            background: #1e293b; padding: 6px 14px; border-radius: 20px;
+            font-size: 0.8rem; color: #94a3b8;
+        }
+        .report-meta .tag strong { color: #60a5fa; }
+        .report-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .report-actions .btn { width: auto; padding: 10px 20px; font-size: 0.85rem; }
+
+        /* ─── History ──────────────────────────────────────────────────────── */
+        .history-list { list-style: none; }
+        .history-item {
+            background: #0f172a; border: 1px solid #334155; border-radius: 8px;
+            padding: 16px; margin-bottom: 10px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .history-item .sector { font-weight: 600; color: #60a5fa; text-transform: capitalize; }
+        .history-item .meta { color: #94a3b8; font-size: 0.85rem; }
+
+        /* ─── Toast ────────────────────────────────────────────────────────── */
+        .toast {
+            position: fixed; bottom: 24px; right: 24px; background: #1e293b;
+            border: 1px solid #334155; border-radius: 10px; padding: 14px 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4); z-index: 200;
+            transform: translateY(100px); opacity: 0; transition: all 0.3s;
+            font-size: 0.9rem; max-width: 360px;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.error { border-color: #dc2626; }
+        .toast.success { border-color: #16a34a; }
+
+        /* ─── Info Banner ──────────────────────────────────────────────────── */
+        .info-banner {
+            background: linear-gradient(135deg, rgba(37,99,235,0.1), rgba(124,58,237,0.1));
+            border: 1px solid rgba(96,165,250,0.2); border-radius: 10px;
+            padding: 16px 20px; margin-bottom: 24px; font-size: 0.9rem;
+            color: #94a3b8;
+        }
+        .info-banner strong { color: #60a5fa; }
+
+        /* ─── Responsive ───────────────────────────────────────────────────── */
+        @media (max-width: 640px) {
+            .container { padding: 16px; }
+            .analyze-bar { flex-direction: column; }
+            .analyze-bar .btn { width: 100%; }
+            .report-meta { flex-direction: column; gap: 8px; }
+            .sector-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+        }
+    </style>
+</head>
+<body>
+    <!-- ═══ Navbar ═══════════════════════════════════════════════════════════ -->
+    <nav class="navbar">
+        <div style="display:flex;align-items:center;gap:20px;">
+            <span class="brand">📊 Trade Opportunities API</span>
+            <div class="nav-links" id="navLinks" style="display:none;">
+                <a href="#" onclick="showPage('analyze')" id="nav-analyze" class="active">🔍 Analyze</a>
+                <a href="#" onclick="showPage('history')" id="nav-history">📋 History</a>
+                <a href="#" onclick="showPage('about')" id="nav-about">ℹ️ About</a>
+                <a href="/docs" target="_blank">📄 API Docs</a>
+            </div>
+        </div>
+        <div class="user-info" id="userInfo" style="display:none;">
+            <span class="user-badge" id="userBadge">guest</span>
+            <button class="btn-logout" onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+    <!-- ═══ Toast Notification ═══════════════════════════════════════════════ -->
+    <div class="toast" id="toast"></div>
+
+    <!-- ═══ LOGIN PAGE ═══════════════════════════════════════════════════════ -->
+    <div class="page active" id="page-login">
+        <div class="login-wrapper">
+            <div class="login-card">
+                <h1>📊 Trade Analyzer</h1>
+                <p class="subtitle">Analyze market data & trade opportunities for Indian sectors</p>
+
+                <div class="demo-creds">
+                    <div class="title">👤 Click to auto-fill credentials:</div>
+                    <div class="cred" onclick="fillCreds('admin','admin123')">
+                        <span>admin</span> <span>admin123 (Full access)</span>
+                    </div>
+                    <div class="cred" onclick="fillCreds('analyst','analyst123')">
+                        <span>analyst</span> <span>analyst123 (Analyst)</span>
+                    </div>
+                    <div class="cred" onclick="fillCreds('guest','guest123')">
+                        <span>guest</span> <span>guest123 (Guest)</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="loginUser" placeholder="Enter username" />
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPass" placeholder="Enter password" />
+                </div>
+                <button class="btn btn-primary" id="btnLogin" onclick="doLogin()">
+                    🔓 Login
+                </button>
+                <p style="text-align:center;color:#64748b;font-size:0.8rem;margin-top:14px;">
+                    Powered by FastAPI + Google Gemini AI + DuckDuckGo
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ ANALYZE PAGE ═════════════════════════════════════════════════════ -->
+    <div class="page" id="page-analyze">
+        <div class="container">
+            <div class="info-banner">
+                <strong>How it works:</strong> Select a sector → Click Analyze →
+                The system searches the web for real-time data → Google Gemini AI
+                generates a comprehensive trade opportunities report. Takes about 30-60 seconds.
+            </div>
+
+            <!-- Sector Selection -->
+            <div class="card">
+                <h2><span class="icon">🏭</span> Select a Sector</h2>
+                <div class="sector-grid" id="sectorGrid">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+
+            <!-- Analyze Action -->
+            <div class="card">
+                <h2><span class="icon">🔍</span> Run Analysis</h2>
+                <div class="analyze-bar">
+                    <div class="form-group">
+                        <label>Sector Name</label>
+                        <input type="text" id="sectorInput" placeholder="Select a sector above or type a custom one..." />
+                    </div>
+                    <button class="btn btn-primary" id="btnAnalyze" onclick="doAnalyze()">
+                        🚀 Analyze Sector
+                    </button>
+                </div>
+
+                <!-- Progress Steps -->
+                <div class="status-bar" id="statusBar">
+                    <div class="step" id="step1">
+                        <span class="icon" id="step1Icon">⬜</span>
+                        <span>Validating input & checking rate limits...</span>
+                    </div>
+                    <div class="step" id="step2">
+                        <span class="icon" id="step2Icon">⬜</span>
+                        <span>Searching the web for market data & news (DuckDuckGo)...</span>
+                    </div>
+                    <div class="step" id="step3">
+                        <span class="icon" id="step3Icon">⬜</span>
+                        <span>AI analyzing data & generating report (Google Gemini)...</span>
+                    </div>
+                    <div class="step" id="step4">
+                        <span class="icon" id="step4Icon">⬜</span>
+                        <span>Saving report & preparing results...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report Output -->
+            <div class="card" id="reportCard" style="display:none;">
+                <h2><span class="icon">📄</span> Analysis Report</h2>
+                <div class="report-meta" id="reportMeta"></div>
+                <div class="report-container show" id="reportContent"></div>
+                <div class="report-actions">
+                    <button class="btn btn-secondary" onclick="copyReport()">📋 Copy Report</button>
+                    <button class="btn btn-secondary" onclick="downloadReport()">💾 Download .md</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ HISTORY PAGE ═════════════════════════════════════════════════════ -->
+    <div class="page" id="page-history">
+        <div class="container">
+            <div class="card">
+                <h2><span class="icon">📋</span> Report History</h2>
+                <p style="color:#94a3b8;margin-bottom:16px;font-size:0.9rem;">
+                    All reports generated during this server session.
+                </p>
+                <ul class="history-list" id="historyList">
+                    <li style="color:#64748b;padding:20px;text-align:center;">No reports generated yet.</li>
+                </ul>
+                <button class="btn btn-secondary" onclick="loadHistory()" style="margin-top:12px;width:auto;padding:10px 20px;">
+                    🔄 Refresh History
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ ABOUT PAGE ═══════════════════════════════════════════════════════ -->
+    <div class="page" id="page-about">
+        <div class="container">
+            <div class="card">
+                <h2><span class="icon">ℹ️</span> About This API</h2>
+                <table style="width:100%;border-collapse:collapse;margin-top:12px;">
+                    <tr><td style="padding:10px;color:#94a3b8;border-bottom:1px solid #334155;width:40%;"><strong>Framework</strong></td><td style="padding:10px;border-bottom:1px solid #334155;">FastAPI (async Python)</td></tr>
+                    <tr><td style="padding:10px;color:#94a3b8;border-bottom:1px solid #334155;"><strong>AI Model</strong></td><td style="padding:10px;border-bottom:1px solid #334155;">Google Gemini 2.0 Flash</td></tr>
+                    <tr><td style="padding:10px;color:#94a3b8;border-bottom:1px solid #334155;"><strong>Web Search</strong></td><td style="padding:10px;border-bottom:1px solid #334155;">DuckDuckGo (no API key needed)</td></tr>
+                    <tr><td style="padding:10px;color:#94a3b8;border-bottom:1px solid #334155;"><strong>Authentication</strong></td><td style="padding:10px;border-bottom:1px solid #334155;">JWT (JSON Web Tokens)</td></tr>
+                    <tr><td style="padding:10px;color:#94a3b8;border-bottom:1px solid #334155;"><strong>Rate Limiting</strong></td><td style="padding:10px;border-bottom:1px solid #334155;">10 requests / 60 seconds per user</td></tr>
+                    <tr><td style="padding:10px;color:#94a3b8;border-bottom:1px solid #334155;"><strong>Storage</strong></td><td style="padding:10px;border-bottom:1px solid #334155;">In-memory (resets on restart)</td></tr>
+                    <tr><td style="padding:10px;color:#94a3b8;"><strong>Validation</strong></td><td style="padding:10px;">Pydantic v2</td></tr>
+                </table>
+            </div>
+            <div class="card">
+                <h2><span class="icon">🔗</span> API Endpoints</h2>
+                <table style="width:100%;border-collapse:collapse;margin-top:12px;">
+                    <tr style="background:#0f172a;">
+                        <th style="padding:10px;text-align:left;border-bottom:1px solid #334155;color:#60a5fa;">Method</th>
+                        <th style="padding:10px;text-align:left;border-bottom:1px solid #334155;color:#60a5fa;">Endpoint</th>
+                        <th style="padding:10px;text-align:left;border-bottom:1px solid #334155;color:#60a5fa;">Auth?</th>
+                        <th style="padding:10px;text-align:left;border-bottom:1px solid #334155;color:#60a5fa;">Description</th>
+                    </tr>
+                    <tr><td style="padding:10px;border-bottom:1px solid #1e293b;"><span style="background:#16a34a;color:white;padding:2px 8px;border-radius:4px;font-size:0.75rem;">GET</span></td><td style="padding:10px;border-bottom:1px solid #1e293b;font-family:monospace;">/</td><td style="padding:10px;border-bottom:1px solid #1e293b;">❌</td><td style="padding:10px;border-bottom:1px solid #1e293b;">Health check</td></tr>
+                    <tr><td style="padding:10px;border-bottom:1px solid #1e293b;"><span style="background:#f59e0b;color:black;padding:2px 8px;border-radius:4px;font-size:0.75rem;">POST</span></td><td style="padding:10px;border-bottom:1px solid #1e293b;font-family:monospace;">/login</td><td style="padding:10px;border-bottom:1px solid #1e293b;">❌</td><td style="padding:10px;border-bottom:1px solid #1e293b;">Get JWT token</td></tr>
+                    <tr><td style="padding:10px;border-bottom:1px solid #1e293b;"><span style="background:#16a34a;color:white;padding:2px 8px;border-radius:4px;font-size:0.75rem;">GET</span></td><td style="padding:10px;border-bottom:1px solid #1e293b;font-family:monospace;">/sectors</td><td style="padding:10px;border-bottom:1px solid #1e293b;">❌</td><td style="padding:10px;border-bottom:1px solid #1e293b;">List sectors</td></tr>
+                    <tr><td style="padding:10px;border-bottom:1px solid #1e293b;"><span style="background:#16a34a;color:white;padding:2px 8px;border-radius:4px;font-size:0.75rem;">GET</span></td><td style="padding:10px;border-bottom:1px solid #1e293b;font-family:monospace;">/analyze/{sector}</td><td style="padding:10px;border-bottom:1px solid #1e293b;">✅</td><td style="padding:10px;border-bottom:1px solid #1e293b;"><strong>Main — Sector analysis</strong></td></tr>
+                    <tr><td style="padding:10px;border-bottom:1px solid #1e293b;"><span style="background:#16a34a;color:white;padding:2px 8px;border-radius:4px;font-size:0.75rem;">GET</span></td><td style="padding:10px;border-bottom:1px solid #1e293b;font-family:monospace;">/history</td><td style="padding:10px;border-bottom:1px solid #1e293b;">✅</td><td style="padding:10px;border-bottom:1px solid #1e293b;">Report history</td></tr>
+                    <tr><td style="padding:10px;"><span style="background:#16a34a;color:white;padding:2px 8px;border-radius:4px;font-size:0.75rem;">GET</span></td><td style="padding:10px;font-family:monospace;">/session</td><td style="padding:10px;">✅</td><td style="padding:10px;">Session info</td></tr>
+                </table>
+            </div>
+            <div class="card">
+                <h2><span class="icon">👤</span> Author</h2>
+                <p style="color:#94a3b8;">
+                    <strong style="color:#f1f5f9;">Vipin</strong> — Python Developer<br>
+                    Built as part of the Appscrip Python Developer Assignment.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ JavaScript ═══════════════════════════════════════════════════════ -->
+    <script>
+        // ── State ──
+        let TOKEN = null;
+        let USERNAME = null;
+        let RAW_REPORT = '';
+        let CURRENT_SECTOR = '';
+        const API = window.location.origin;
+
+        // ── Navigation ──
+        function showPage(name) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-' + name).classList.add('active');
+            document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+            const navEl = document.getElementById('nav-' + name);
+            if (navEl) navEl.classList.add('active');
+            if (name === 'history') loadHistory();
+        }
+
+        // ── Toast ──
+        function toast(msg, type = 'info') {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.className = 'toast show ' + type;
+            setTimeout(() => el.classList.remove('show'), 4000);
+        }
+
+        // ── Login ──
+        function fillCreds(u, p) {
+            document.getElementById('loginUser').value = u;
+            document.getElementById('loginPass').value = p;
+        }
+
+        async function doLogin() {
+            const user = document.getElementById('loginUser').value.trim();
+            const pass = document.getElementById('loginPass').value.trim();
+            if (!user || !pass) return toast('Please enter username and password', 'error');
+
+            const btn = document.getElementById('btnLogin');
+            btn.disabled = true; btn.textContent = '⏳ Logging in...';
+
+            try {
+                const resp = await fetch(API + '/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: user, password: pass })
+                });
+
+                if (!resp.ok) {
+                    const err = await resp.json();
+                    throw new Error(err.detail || 'Login failed');
+                }
+
+                const data = await resp.json();
+                TOKEN = data.access_token;
+                USERNAME = user;
+
+                // Update UI
+                document.getElementById('navLinks').style.display = 'flex';
+                document.getElementById('userInfo').style.display = 'flex';
+                document.getElementById('userBadge').textContent = USERNAME;
+
+                // Load sectors then switch page
+                await loadSectors();
+                showPage('analyze');
+                toast('Welcome, ' + USERNAME + '! 🎉', 'success');
+
+            } catch (e) {
+                toast('❌ ' + e.message, 'error');
+            } finally {
+                btn.disabled = false; btn.textContent = '🔓 Login';
+            }
+        }
+
+        function logout() {
+            TOKEN = null; USERNAME = null;
+            document.getElementById('navLinks').style.display = 'none';
+            document.getElementById('userInfo').style.display = 'none';
+            document.getElementById('loginUser').value = '';
+            document.getElementById('loginPass').value = '';
+            showPage('login');
+            toast('Logged out', 'info');
+        }
+
+        // ── Sectors ──
+        async function loadSectors() {
+            try {
+                const resp = await fetch(API + '/sectors');
+                const data = await resp.json();
+                const grid = document.getElementById('sectorGrid');
+                grid.innerHTML = data.supported_sectors.map(s =>
+                    `<div class="sector-chip" onclick="selectSector(event, '${s}')">${s}</div>`
+                ).join('');
+            } catch (e) {
+                toast('Failed to load sectors', 'error');
+            }
+        }
+
+        function selectSector(e, name) {
+            document.getElementById('sectorInput').value = name;
+            document.querySelectorAll('.sector-chip').forEach(c => c.classList.remove('selected'));
+            e.target.classList.add('selected');
+        }
+
+        // ── Analyze ──
+        function setStep(num, state) {
+            const el = document.getElementById('step' + num);
+            const icon = document.getElementById('step' + num + 'Icon');
+            el.className = 'step ' + state;
+            if (state === 'active') icon.innerHTML = '<span class="spinner"></span>';
+            else if (state === 'done') icon.textContent = '✅';
+            else icon.textContent = '⬜';
+        }
+
+        async function doAnalyze() {
+            const sector = document.getElementById('sectorInput').value.trim();
+            if (!sector) return toast('Please select or type a sector name', 'error');
+            if (!TOKEN) return toast('Please login first', 'error');
+
+            CURRENT_SECTOR = sector;
+            const btn = document.getElementById('btnAnalyze');
+            btn.disabled = true; btn.textContent = '⏳ Analyzing...';
+
+            // Reset & show progress
+            document.getElementById('reportCard').style.display = 'none';
+            const bar = document.getElementById('statusBar');
+            bar.classList.add('show');
+            [1,2,3,4].forEach(n => setStep(n, ''));
+
+            try {
+                // Simulate progress
+                setStep(1, 'active');
+                await sleep(500);
+                setStep(1, 'done');
+                setStep(2, 'active');
+
+                // Real API call
+                const resp = await fetch(API + '/analyze/' + encodeURIComponent(sector), {
+                    headers: { 'Authorization': 'Bearer ' + TOKEN }
+                });
+
+                setStep(2, 'done');
+                setStep(3, 'active');
+                await sleep(300);
+
+                if (!resp.ok) {
+                    const err = await resp.json();
+                    throw new Error(err.detail || 'Analysis failed');
+                }
+
+                const data = await resp.json();
+                setStep(3, 'done');
+                setStep(4, 'active');
+                await sleep(300);
+                setStep(4, 'done');
+
+                RAW_REPORT = data.report;
+
+                // Show report
+                document.getElementById('reportMeta').innerHTML = `
+                    <span class="tag"><strong>Sector:</strong> ${data.sector}</span>
+                    <span class="tag"><strong>Sources:</strong> ${data.sources_count}</span>
+                    <span class="tag"><strong>Generated:</strong> ${new Date(data.generated_at).toLocaleString()}</span>
+                    <span class="tag"><strong>Status:</strong> ${data.status}</span>
+                `;
+                document.getElementById('reportContent').innerHTML = markdownToHtml(data.report);
+                document.getElementById('reportCard').style.display = 'block';
+
+                // Scroll to report
+                setTimeout(() => {
+                    document.getElementById('reportCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 200);
+
+                toast('✅ Report generated successfully!', 'success');
+
+            } catch (e) {
+                [1,2,3,4].forEach(n => { if(document.getElementById('step'+n).classList.contains('active')) setStep(n, ''); });
+                toast('❌ ' + e.message, 'error');
+            } finally {
+                btn.disabled = false; btn.textContent = '🚀 Analyze Sector';
+            }
+        }
+
+        // ── History ──
+        async function loadHistory() {
+            if (!TOKEN) return;
+            try {
+                const resp = await fetch(API + '/history', {
+                    headers: { 'Authorization': 'Bearer ' + TOKEN }
+                });
+                const data = await resp.json();
+                const list = document.getElementById('historyList');
+
+                if (!data.history || data.history.length === 0) {
+                    list.innerHTML = '<li style="color:#64748b;padding:20px;text-align:center;">No reports generated yet. Go to Analyze to create your first report!</li>';
+                    return;
+                }
+
+                list.innerHTML = data.history.map(h => `
+                    <li class="history-item">
+                        <div>
+                            <div class="sector">${h.sector}</div>
+                            <div class="meta">📄 ${h.filename}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div class="meta">${new Date(h.timestamp).toLocaleString()}</div>
+                            <div class="meta">${(h.char_count / 1024).toFixed(1)} KB</div>
+                        </div>
+                    </li>
+                `).join('');
+            } catch (e) {
+                toast('Failed to load history', 'error');
+            }
+        }
+
+        // ── Report Actions ──
+        function copyReport() {
+            navigator.clipboard.writeText(RAW_REPORT).then(() => {
+                toast('📋 Report copied to clipboard!', 'success');
+            });
+        }
+
+        function downloadReport() {
+            const blob = new Blob([RAW_REPORT], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = CURRENT_SECTOR + '_report.md';
+            a.click();
+            URL.revokeObjectURL(url);
+            toast('💾 Report downloaded!', 'success');
+        }
+
+        // ── Helpers ──
+        function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+        function markdownToHtml(md) {
+            if (!md) return '';
+            return md
+                // Code blocks
+                .replace(/```[\s\S]*?```/g, m => '<pre style="background:#1e293b;padding:12px;border-radius:6px;overflow-x:auto;margin:8px 0;">' + m.slice(3,-3).trim() + '</pre>')
+                // Headers
+                .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+                .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+                .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+                // Bold & italic
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                // Horizontal rules
+                .replace(/^---+$/gm, '<hr>')
+                .replace(/^\*\*\*+$/gm, '<hr>')
+                // Unordered lists
+                .replace(/^\* (.+)$/gm, '<li>$1</li>')
+                .replace(/^- (.+)$/gm, '<li>$1</li>')
+                .replace(/^  \* (.+)$/gm, '<li style="margin-left:20px;">$1</li>')
+                .replace(/^    \* (.+)$/gm, '<li style="margin-left:40px;">$1</li>')
+                // Wrap consecutive <li> in <ul>
+                .replace(/((?:<li[^>]*>.*<\/li>\n?)+)/g, '<ul>$1</ul>')
+                // Tables (basic)
+                .replace(/^\|(.+)\|$/gm, (m, content) => {
+                    const cells = content.split('|').map(c => c.trim());
+                    if (cells.every(c => /^[-:]+$/.test(c))) return '';
+                    const tag = 'td';
+                    return '<tr>' + cells.map(c => `<${tag} style="border:1px solid #334155;padding:8px;">${c}</${tag}>`).join('') + '</tr>';
+                })
+                .replace(/((?:<tr>.*<\/tr>\n?)+)/g, '<table style="width:100%;border-collapse:collapse;margin:12px 0;">$1</table>')
+                // Paragraphs
+                .replace(/\n\n/g, '</p><p>')
+                .replace(/\n/g, '<br>')
+                ;
+        }
+
+        // ── Keyboard shortcut ──
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                if (document.getElementById('page-login').classList.contains('active')) doLogin();
+            }
+        });
+    </script>
+</body>
+</html>
